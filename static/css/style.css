@@ -1,0 +1,154 @@
+/* RESET, "*" aplica estas regra a todos os elementos da página */
+
+* {
+    /* Remove as margens externas padrão do navegador */
+    margin: 0;
+    /* Remove os espaçamentos internos padrão */
+    padding: 0;
+    /* Define o modelo de caixa para incluir bordas e preenchimento no tamanho total do elemento */
+    box-sizing: border-box;
+}
+
+
+/* BODY */
+
+body {
+    /* 100vh = 100% da altura da tela */ 
+    height: 100vh;
+    /* Centraliza o conteúdo usando Flexbox */
+    display: flex;
+    /* Centraliza horizontalmente */
+    justify-content: center;
+    /* Centraliza verticalmente */
+    align-items: center;
+    /* Cor de fundo suave para a página de login */
+    background-color: #f0f2f5;
+    /* Define a fonte para toda a página */
+    font-family: Arial, sans-serif;
+}
+
+
+/* CONTAINER LOGIN */
+
+.login-container {
+    /* Define a largura do container de login */
+    width: 350px;
+    /* Cor de fundo branca para o formulário de login */
+    background-color: white;
+    /* Espaçamento interno */
+    padding: 40px;
+    /* Bordas arredondadas para um visual mais suave */
+    border-radius: 12px;
+    /* Sombra para dar profundidade ao container */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Centraliza o texto dentro do container */
+    text-align: center;
+}
+
+
+/* TÍTULO */
+
+.login-container h1 {
+    /*Adiciona espaço abaixo do título */
+    margin-bottom: 30px;
+    /* Define a cor do texto do título */
+    color: #000000;
+}
+
+
+/* FORMULÁRIO */
+
+form {
+    /* Organiza os elementos do formulário usando Flexbox */
+    display: flex;
+    /* Organiza elementos verticalmente */
+    flex-direction: column;
+    /* Espaçamento entre elementos */
+    gap: 15px;
+}
+
+
+/* INPUTS */
+
+input {
+    /* Espaço interno */
+    padding: 12px;
+    /* Cria uma borda cinza clara para os campos de entrada */
+    border: 1px solid #ccc;
+    /* Arredonda os cantos */
+    border-radius: 6px;
+    /* Tamanho da letra */
+    font-size: 16px;
+    /* outline: none; remove a borda azul padrão do navegador ao focar no input */
+    outline: none;
+}
+
+
+input:focus {
+    /* Adiciona uma borda azul mais escura quando o usuário clica no campo */
+    border-color: #007bff;
+}
+
+
+/* BOTÃO */
+
+button {
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background-color: #007bff;
+
+    color: white;
+
+    font-size: 16px;
+    /* Muda o cursor para uma mãozinha quando o usuário passa o mouse sobre o botão, indicando que é clicável */
+    cursor: pointer;
+    /* Adiciona uma transição suave para a mudança de cor do botão quando o usuário passa o mouse sobre ele */
+    transition: 0.3s;
+}
+
+
+button:hover {
+
+    background-color: #0056b3;
+}
+
+
+/* MENSAGEM DE ERRO */
+
+.erro {
+
+    margin-top: 20px;
+
+    color: red;
+
+    font-size: 14px;
+
+    font-weight: bold;
+}
+
+
+/* LINK CADASTRO */
+
+.register-link {
+    /* Transforma o link em um bloco */
+    display: block;
+
+    margin-top: 20px;
+    /* Remove o sublinhado padrão do link*/
+    text-decoration: none;
+
+    color: #007bff;
+
+    font-size: 14px;
+}
+
+
+.register-link:hover {
+    /* Adiciona um sublinhado ao passar o mouse sobre o link, indicando que é clicável */
+    text-decoration: underline;
+}

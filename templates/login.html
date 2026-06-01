@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+    <meta charset="UTF-8">
+
+     <!-- Faz a página se adaptar a dispositivos móveis -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+     <!-- Título exibido na aba do navegador -->
+    <title>Login</title>
+
+    <!-- Importa o arquivo CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+<body>
+    <!-- Container principal da tela de login. Será estilizado pelo CSS -->
+    <div class="login-container">
+
+        <!-- Título da página -->
+        <h1>Login</h1>
+
+        <!--    Formulário.
+            
+                action="/login" significa que ao clicar no botão, os dados serão enviados para a rota 
+        -->
+        <form action="/login" method="POST">
+
+            <input
+                type="text"
+                name="username"
+                placeholder="Usuário"
+                required
+            >
+
+            <input
+                type="password"
+                name="password"
+                placeholder="Senha"
+                required
+            >
+
+            <button type="submit">
+                Entrar
+            </button>
+
+        </form>
+
+
+        <!-- MENSAGEM DE ERRO -->
+
+        {% if erro %}
+
+            <p class="erro">
+
+                {{ erro }}
+
+            </p>
+
+        {% endif %}
+
+        <!-- Link para a tela de cadastro. -->
+
+        <a href="/register" class="register-link">
+
+            Criar conta
+
+        </a>
+
+    </div>
+
+</body>
+</html>
