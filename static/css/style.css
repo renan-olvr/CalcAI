@@ -55,6 +55,19 @@ body {
     color: #000000;
 }
 
+/* CONTAINER CADASTRO */
+.cadastro-container {
+
+    margin-top: 20px;
+}
+
+/* CONTAINER CONVIDADO */
+
+.guest-container {
+
+    margin-top: 20px;
+}
+
 
 /* FORMULÁRIO */
 
@@ -138,17 +151,58 @@ button:hover {
     /* Transforma o link em um bloco */
     display: block;
 
-    margin-top: 20px;
+    margin-top: 5px;
     /* Remove o sublinhado padrão do link*/
     text-decoration: none;
 
     color: #007bff;
 
+    text-decoration: underline;
+
+    font-size: 14px;
+}
+
+.register-link:hover {
+    /* Adiciona um sublinhado ao passar o mouse sobre o link, indicando que é clicável */
+    text-decoration: underline;
+}
+
+/* ADD DEPOISSS */
+
+/* BLOCO DE CADASTRO */
+
+.cadastro-container span {
+
+    color: #666;
+
     font-size: 14px;
 }
 
 
-.register-link:hover {
-    /* Adiciona um sublinhado ao passar o mouse sobre o link, indicando que é clicável */
+.guest-container span {
+
+    display: block;
+
+    color: #666;
+
+    margin-bottom: 20px;
+}
+
+
+/* LINK ENTRAR SEM CADASTRO */
+
+.guest-link {
+
+    color: #007bff;
+
+    text-decoration: none;
+
+    font-size: 14px;
+
+    font-weight: bold;
+}
+
+.guest-link:hover {
+
     text-decoration: underline;
 }

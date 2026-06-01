@@ -32,6 +32,13 @@ def init_db():
 # ---------------------------
 init_db()
 
+# ---------------------------
+# ENTRAR COMO CONVIDADO
+# ---------------------------
+@app.route("/guest")
+def guest():
+    return render_template("welcome.html", username="Visitante")
+      
 
 # ---------------------------
 # TELA DE LOGIN
@@ -78,7 +85,7 @@ def login():
 
 
 # ---------------------------
-# REGISTRO
+# REGISTRARAR USUÁRIO
 # ---------------------------
 
 @app.route("/register")
