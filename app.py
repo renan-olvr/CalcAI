@@ -17,7 +17,7 @@ def init_db():
     cur.execute("""
                 CREATE TABLE IF NOT EXISTS users(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
+                username TEXT NOT NULL,
                 email TEXT(100) NOT NULL UNIQUE,
                 password TEXT NOT NULL,
                 registration_date TEXT,
