@@ -1,5 +1,6 @@
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -17,7 +18,10 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS users(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL UNIQUE,
-                password TEXT NOT NULL
+                email TEXT(100) NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                registration_date TEXT,
+                update_date TEXT
                 );
     """)
 
@@ -59,17 +63,18 @@ def login_page():
 @app.route("/login", methods=["POST"])
 def login():
 
-    username = request.form["username"]
+    email = request.form["username"]
     password = request.form["password"]
 
     con = sqlite3.connect("database.db")
     cur = con.cursor()
 
     cur.execute("""
-                SELECT * FROM users
-                WHERE username = ? AND password = ?
+                SELECT *
+                FROM users
+                WHERE (email = ? AND password = ?)
                 """,
-                (username, password) )
+                (email, password) )
 
     user_exists = cur.fetchone()
 
@@ -77,7 +82,7 @@ def login():
 
     # Verifica se o usuário existe e redireciona para a página de boas-vindas, caso contrário, exibe uma mensagem de erro
     if user_exists:
-        return render_template("welcome.html", username=username)
+        return render_template("calculator.html")
         # substituir pela página desejada no projeto
 
     else:
@@ -94,34 +99,52 @@ def register_page():
 
 
 
-# função ok, apenas precisa exibir a mensagem na prórpia página de registro,
-# ao invés de redirecionar para outra página, caso o usuário já exista.
 @app.route("/register_user", methods=["POST"])
 def register_user():
 
     username = request.form["username"]
+    email = request.form["email"]
     password = request.form["password"]
+    confirm_password = request.form["confirm_password"]
+
+    if password != confirm_password:
+        return render_template("register.html", erro="As senhas digitas não coincidem")
+
 
     try:
         con = sqlite3.connect("database.db")
         cur = con.cursor()
 
         cur.execute("""
-                    INSERT INTO users(username, password)
-                    VALUES(?, ?)
+                    INSERT INTO users(username, email, password, registration_date, update_date)
+                    VALUES(?, ?, ?, ?, ?)
                     """,
-                    (username, password) )
+                    (username, email, password, datetime.now(), datetime.now()) )
 
         # Save (commit) the changes
         con.commit()
 
         # Close the connection
-        con.close()
+        #con.close()
 
         return redirect(url_for("login_page"))
 
-    except:
-        return "Usuário já cadastrado. Por favor, escolha outro nome de usuário."
+     # Usuário ou e-mail duplicado (UNIQUE)
+    except sqlite3.IntegrityError:
+        return render_template("register.html", erro="Usuário ou e-mail já cadastrado.")
+
+     # Qualquer outro erro inesperado
+    except Exception as e:
+
+        print(f"Erro inesperado: {e}")
+
+        return render_template("register.html", erro="Ocorreu um erro inesperado.")
+
+    finally:
+        try:
+            con.close()
+        except:
+            pass
 
 
 # ---------------------------
