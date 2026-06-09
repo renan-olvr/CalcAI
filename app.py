@@ -1,6 +1,8 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+import requests
 from datetime import datetime
+import math
 
 app = Flask(__name__)
 
@@ -41,7 +43,7 @@ init_db()
 # ---------------------------
 @app.route("/guest")
 def guest():
-    return render_template("welcome.html", username="Visitante")
+    return render_template("index.html")
       
 
 # ---------------------------
@@ -82,7 +84,7 @@ def login():
 
     # Verifica se o usuário existe e redireciona para a página de boas-vindas, caso contrário, exibe uma mensagem de erro
     if user_exists:
-        return render_template("calculator.html")
+        return render_template("index.html")
         # substituir pela página desejada no projeto
 
     else:
@@ -145,6 +147,183 @@ def register_user():
             con.close()
         except:
             pass
+
+
+# ---------------------------
+# INTEGRAÇÃO
+# ---------------------------
+# ================= TAXAS (BrasilAPI) =================
+BRASIL_API_TAXAS = "https://brasilapi.com.br/api/taxas/v1"
+
+TAXAS_FALLBACK = {
+    "SELIC": 13.75,
+    "CDI": 13.65,
+    "IPCA": 4.52,
+}
+
+def get_taxas_mercado():
+    try:
+        resp = requests.get(BRASIL_API_TAXAS, timeout=8)
+        resp.raise_for_status()
+
+        dados = resp.json()
+
+        mapa = {
+            item["nome"].upper(): item["valor"]
+            for item in dados
+        }
+
+        return {
+            "selic": mapa.get("SELIC", TAXAS_FALLBACK["SELIC"]),
+            "cdi": mapa.get("CDI", TAXAS_FALLBACK["CDI"]),
+            "ipca": mapa.get("IPCA", TAXAS_FALLBACK["IPCA"]),
+            "fonte": "BrasilAPI"
+        }
+
+    except Exception as e:
+        return {
+            **TAXAS_FALLBACK,
+            "fonte": f"fallback ({str(e)[:40]})"
+        }
+
+# ================= PRODUTOS =================
+TAXAS_PRODUTO = {
+    "CDB": {
+        "fator_min": 0.95,
+        "fator_max": 1.10,
+        "indexer": "CDI",
+        "label": "% do CDI"
+    },
+
+    "LCI": {
+        "fator_min": 0.85,
+        "fator_max": 0.95,
+        "indexer": "CDI",
+        "label": "% do CDI (isento IR)"
+    },
+
+    "LCA": {
+        "fator_min": 0.87,
+        "fator_max": 0.97,
+        "indexer": "CDI",
+        "label": "% do CDI (isento IR)"
+    },
+
+    "SELIC": {
+        "fator_min": 1.00,
+        "fator_max": 1.00,
+        "indexer": "SELIC",
+        "label": "100% da SELIC"
+    },
+}
+
+def calcular_projecao(aporte_mensal, taxa_aa_decimal, meses):
+
+    taxa_mm = math.pow(1 + taxa_aa_decimal, 1 / 12) - 1
+
+    patrimonio = 0.0
+    total_aportado = 0.0
+
+    historico = []
+
+    for _ in range(meses):
+
+        patrimonio = patrimonio * (1 + taxa_mm) + aporte_mensal
+        total_aportado += aporte_mensal
+
+        historico.append({
+            "patrimonio": round(patrimonio, 2),
+            "aportado": round(total_aportado, 2),
+            "rendimento": round(patrimonio - total_aportado, 2),
+        })
+
+    return historico
+
+# ================= API TAXAS =================
+@app.route("/api/taxas", methods=["GET"])
+def taxas():
+    return jsonify(get_taxas_mercado())
+
+# ================= API INVESTIMENTOS =================
+@app.route("/api/investimentos", methods=["POST"])
+def investimentos():
+
+    data = request.json or {}
+
+    try:
+        renda = float(data.get("renda", 0))
+        percentual = float(data.get("percentual", 0))
+        aporte_adicional = float(data.get("aporte_adicional", 0))
+        tipo = str(data.get("tipo", "CDB")).upper()
+        meses = int(data.get("periodo", 12))
+
+    except (ValueError, TypeError) as e:
+        return jsonify({
+            "erro": f"Parâmetros inválidos: {e}"
+        }), 400
+
+    if meses < 1 or meses > 600:
+        return jsonify({
+            "erro": "Período deve ser entre 1 e 600 meses."
+        }), 400
+
+    taxas = get_taxas_mercado()
+
+    produto = TAXAS_PRODUTO.get(
+        tipo,
+        TAXAS_PRODUTO["CDB"]
+    )
+
+    taxa_base = (
+        taxas["selic"]
+        if produto["indexer"] == "SELIC"
+        else taxas["cdi"]
+    )
+
+    fator_medio = (
+        produto["fator_min"] +
+        produto["fator_max"]
+    ) / 2
+
+    taxa_aa = (
+        taxa_base / 100
+    ) * fator_medio
+
+    aporte_mensal = (
+        renda * (percentual / 100)
+    ) + aporte_adicional
+
+    historico = calcular_projecao(
+        aporte_mensal,
+        taxa_aa,
+        meses
+    )
+
+    ultimo = historico[-1]
+
+    rendimento = ultimo["rendimento"]
+
+    pct_rendimento = (
+        (rendimento / ultimo["aportado"]) * 100
+        if ultimo["aportado"] > 0
+        else 0
+    )
+
+    resultado = {
+        "tipo": tipo,
+        "periodo_meses": meses,
+        "aporte_mensal": round(aporte_mensal, 2),
+        "patrimonio_final": ultimo["patrimonio"],
+        "total_aportado": ultimo["aportado"],
+        "rendimento_total": round(rendimento, 2),
+        "pct_rendimento": round(pct_rendimento, 2),
+        "taxa_efetiva_aa": round(taxa_aa * 100, 4),
+        "taxa_indexador": produto["label"],
+        "taxas_referencia": taxas,
+        "historico": historico,
+    }
+
+    return jsonify(resultado)
 
 
 # ---------------------------

@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CalculAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<style>
+  :root {
+    --bg: #060a0f;
+    --bg1: #0c1420;
+    --bg2: #111c2e;
+    --bg3: #162035;
+    --surface: rgba(16,26,44,0.7);
+    --surface2: rgba(22,34,58,0.6);
+    --border: rgba(82,180,130,0.15);
+    --border2: rgba(82,180,130,0.3);
+    --border3: rgba(82,180,130,0.5);
+    --accent: #34d399;
+    --accent2: #10b981;
+    --accent3: #059669;
+    --accent-dim: rgba(52,211,153,0.12);
+    --accent-glow: rgba(52,211,153,0.25);
+    --text: #e8f4f0;
+    --text2: #8bb5a4;
+    --text3: #4d7a67;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --info: #60a5fa;
+    --purple: #a78bfa;
+    --font: 'Sora', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* === BG GRID === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(52,211,153,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(52,211,153,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -40vh;
+    left: -20vw;
+    width: 80vw;
+    height: 80vh;
+    background: radial-gradient(ellipse at center, rgba(16,185,129,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* === LAYOUT === */
+  #app {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
+
+  /* === NAV === */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 3rem;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    background: rgba(6,10,15,0.8);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+  }
+
+  .logo-img {
+    height: 54px;
+    width: auto;
+    object-fit: contain;
+
+    filter:
+      drop-shadow(0 0 10px rgba(52,211,153,0.20))
+      drop-shadow(0 0 20px rgba(52,211,153,0.10));
+
+    transition: all 0.35s ease;
+  }
+
+  .logo-img:hover {
+    transform: scale(1.04);
+    filter:
+      drop-shadow(0 0 14px rgba(52,211,153,0.35))
+      drop-shadow(0 0 28px rgba(52,211,153,0.18));
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+
+  .logo-main {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #e8f4f0;
+  }
+
+  .logo-main span {
+    color: #34d399;
+  }
+
+  .logo-text small {
+    font-size: 0.68rem;
+    color: #4d7a67;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+  }
+
+  .logo::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background: radial-gradient(
+      circle,
+      rgba(52,211,153,0.08),
+      transparent 70%
+    );
+    z-index: -1;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .badge-live {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 0.3rem 0.75rem;
+  }
+
+  .dot-live {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* === SCREENS === */
+  .screen { min-height: calc(100vh - 81px); }
+
+  #screen-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+  }
+
+  #screen-dashboard {
+    display: none;
+    padding: 2.5rem 3rem;
+    animation: slideIn 0.5s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === FORM CARD === */
+  .form-wrapper {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .form-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .form-header .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 0.3rem 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .form-header h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 0.8rem;
+  }
+
+  .form-header h1 span { color: var(--accent); }
+
+  .form-header p {
+    font-size: 0.95rem;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem;
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent2), transparent);
+  }
+
+  .field-group { margin-bottom: 1.2rem; }
+
+  .field-group label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 0.5rem;
+  }
+
+  .field-input {
+    width: 100%;
+    background: rgba(6,10,15,0.6);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .field-input:focus {
+    border-color: var(--border3);
+    background: rgba(6,10,15,0.9);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .field-input::placeholder { color: var(--text3); }
+
+  .field-input option {
+    background: var(--bg2);
+    color: var(--text);
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .tipo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .tipo-btn {
+    padding: 0.7rem 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(6,10,15,0.6);
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .tipo-btn:hover { border-color: var(--border2); color: var(--text); }
+
+  .tipo-btn.active {
+    border-color: var(--accent2);
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  .btn-simular {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    color: #000;
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: -0.01em;
+    margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-simular::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  }
+
+  .btn-simular:hover { transform: translateY(-1px); box-shadow: 0 8px 30px var(--accent-glow); }
+  .btn-simular:active { transform: translateY(0); }
+
+  .btn-simular.loading { pointer-events: none; opacity: 0.7; }
+
+  /* === DASHBOARD === */
+  .dash-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .dash-title h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+
+  .dash-title p { font-size: 0.9rem; color: var(--text2); }
+
+  .btn-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: var(--border2); color: var(--text); background: var(--surface2); }
+
+  /* === CARDS GRID === */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem 1.6rem;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--border2); }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 15%; right: 15%;
+    height: 1px;
+  }
+
+  .card.green::before { background: linear-gradient(90deg, transparent, var(--accent2), transparent); }
+  .card.blue::before { background: linear-gradient(90deg, transparent, var(--info), transparent); }
+  .card.amber::before { background: linear-gradient(90deg, transparent, var(--warn), transparent); }
+  .card.purple::before { background: linear-gradient(90deg, transparent, var(--purple), transparent); }
+  .card.red::before { background: linear-gradient(90deg, transparent, var(--danger), transparent); }
+
+  .card-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    margin-bottom: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .card-icon { font-size: 0.85rem; }
+
+  .card-value {
+    font-family: var(--mono);
+    font-size: 1.65rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 0.4rem;
+  }
+
+  .card.green .card-value { color: var(--accent); }
+  .card.blue .card-value { color: var(--info); }
+  .card.amber .card-value { color: var(--warn); }
+  .card.purple .card-value { color: var(--purple); }
+  .card.red .card-value { color: var(--danger); }
+
+  .card-sub {
+    font-size: 0.78rem;
+    color: var(--text3);
+  }
+
+  .card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    margin-top: 0.5rem;
+  }
+
+  .badge-up { background: rgba(52,211,153,0.12); color: var(--accent); }
+  .badge-down { background: rgba(248,113,113,0.12); color: var(--danger); }
+  .badge-neutral { background: rgba(96,165,250,0.12); color: var(--info); }
+
+  /* === CHARTS GRID === */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .chart-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .chart-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-panel-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .chart-panel-sub {
+    font-size: 0.78rem;
+    color: var(--text3);
+    margin-top: 0.2rem;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.72rem;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* === BANCOS TABLE === */
+  .bancos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .bank-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .bank-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bank-item:last-child { border-bottom: none; }
+
+  .bank-name {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .bank-avatar {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .bank-label { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+  .bank-type { font-size: 0.72rem; color: var(--text3); }
+
+  .bank-rate {
+    text-align: right;
+  }
+
+  .bank-rate-value {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  .bank-rate-label { font-size: 0.7rem; color: var(--text3); }
+
+  .bank-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 0.4rem;
+    overflow: hidden;
+    min-width: 60px;
+  }
+
+  .bank-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent3), var(--accent));
+    transition: width 1s ease;
+  }
+
+  /* === TAXAS PANEL === */
+  .taxas-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.8rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .taxa-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .taxa-row:last-child { border-bottom: none; }
+
+  .taxa-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .taxa-desc {
+    font-size: 0.72rem;
+    color: var(--text3);
+    margin-top: 0.1rem;
+  }
+
+  .taxa-valor {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* === PLOTLY PLACEHOLDER === */
+  .plotly-placeholder {
+    background: var(--surface2);
+    border: 1px dashed var(--border2);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .plotly-placeholder svg { opacity: 0.4; }
+
+  .plotly-placeholder p {
+    font-size: 0.8rem;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+
+  .plotly-placeholder code {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    background: rgba(52,211,153,0.08);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    color: var(--accent);
+  }
+
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  /* === API STATUS === */
+  .api-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+    color: var(--text3);
+    padding: 0.4rem 0.8rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .api-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  .api-dot.ok { background: var(--accent); }
+  .api-dot.err { background: var(--danger); }
+  .api-dot.loading { background: var(--warn); animation: pulse 1.5s infinite; }
+
+  /* === TOAST === */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    display: none;
+    z-index: 999;
+    animation: toastIn 0.3s ease;
+    max-width: 300px;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 900px) {
+    nav { padding: 1rem 1.5rem; }
+    #screen-dashboard { padding: 1.5rem; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .bancos-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 600px) {
+    .cards-grid { grid-template-columns: 1fr 1fr; }
+    .form-header h1 { font-size: 1.8rem; }
+    .tipo-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* === SHIMMER === */
+  .shimmer {
+    background: linear-gradient(90deg, var(--bg2) 25%, var(--bg3) 50%, var(--bg2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* === PROGRESS RING === */
+  .ring-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 0;
+  }
+
+  .ring-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+
+  .ring-value { font-family: var(--mono); font-size: 1.1rem; font-weight: 500; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- NAV -->
+  <nav>
+  <div class="logo">
+    <img 
+      src="{{ url_for('static', filename='img/calculai_logo.png') }}" 
+      alt="CalculAI Logo"
+      class="logo-img"
+    >
+
+    <div class="logo-text">
+      <span class="logo-main">Calcul<span>AI</span></span>
+    </div>
+  </div>
+    <div class="nav-right">
+    </div>
+  </nav>
+
+  <!-- SCREEN FORM -->
+  <div id="screen-form" class="screen">
+    <div class="form-wrapper">
+      <div class="form-header">
+        <h1>Simule seu<br><span>patrimônio futuro</span></h1>
+        <p>Compare rendimentos entre bancos com<br>dados reais da Open Finance API</p>
+      </div>
+
+      <div class="form-card">
+        <div class="field-row">
+          <div class="field-group" style="margin-bottom:0">
+            <label>Renda Mensal</label>
+            <input type="text" id="inp-renda" class="field-input" placeholder="R$ 0,00" oninput="maskMoney(this)">
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <label>% para Investir</label>
+            <input type="text" id="inp-percentual" class="field-input" placeholder="20%" oninput="maskPct(this)">
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-top:1.2rem">
+          <label>Tipo de investimento</label>
+          <div class="tipo-grid">
+            <button class="tipo-btn active" data-tipo="CDB" onclick="selectTipo(this)">CDB</button>
+            <button class="tipo-btn" data-tipo="LCI" onclick="selectTipo(this)">LCI</button>
+            <button class="tipo-btn" data-tipo="LCA" onclick="selectTipo(this)">LCA</button>
+            <button class="tipo-btn" data-tipo="SELIC" onclick="selectTipo(this)">SELIC</button>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group" style="margin-bottom:0">
+            <label>Data de Início</label>
+            <input type="date" id="inp-inicio" class="field-input">
+          </div>
+          <div class="field-group" style="margin-bottom:0">
+            <label>Data de Término</label>
+            <input type="date" id="inp-fim" class="field-input">
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-top:1.2rem">
+          <label>Aporte Adicional Mensal</label>
+          <input type="text" id="inp-aporte" class="field-input" placeholder="R$ 0,00 (opcional)" oninput="maskMoney(this)">
+        </div>
+
+        <button class="btn-simular" onclick="iniciarSimulacao()" id="btn-sim">
+          Simular Investimento →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN DASHBOARD -->
+  <div id="screen-dashboard" class="screen">
+
+    <div class="dash-header">
+      <div class="dash-title">
+        <h2 id="dash-titulo">Simulação · CDB</h2>
+        <p id="dash-subtitulo">Carregando dados...</p>
+      </div>
+      <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+        <div class="api-status" id="api-status-el">
+          <div class="api-dot loading" id="api-dot"></div>
+          <span id="api-status-txt">Consultando Open Finance...</span>
+        </div>
+        <button class="btn-back" onclick="voltarForm()">← Nova simulação</button>
+      </div>
+    </div>
+
+    <!-- CARDS PRINCIPAIS -->
+    <div class="cards-grid" id="cards-grid">
+      <div class="card green">
+        <div class="card-label">Patrimônio Final</div>
+        <div class="card-value" id="c-patrimonio">—</div>
+        <div class="card-sub">após o período completo</div>
+        <div class="card-badge badge-up" id="c-patrimonio-badge">+0%</div>
+      </div>
+      <div class="card blue">
+        <div class="card-label">Rendimento Total</div>
+        <div class="card-value" id="c-rendimento">—</div>
+        <div class="card-sub">lucro líquido estimado</div>
+        <div class="card-badge badge-up" id="c-rendimento-pct">sobre o principal</div>
+      </div>
+      <div class="card amber">
+        <div class="card-label">Total Investido</div>
+        <div class="card-value" id="c-investido">—</div>
+        <div class="card-sub" id="c-meses">— meses de aportes</div>
+        <div class="card-badge badge-neutral" id="c-periodo-badge">— meses</div>
+      </div>
+      <div class="card purple">
+        <div class="card-label">Taxa Efetiva a.a.</div>
+        <div class="card-value" id="c-taxa">—</div>
+        <div class="card-sub" id="c-taxa-tipo">indexador principal</div>
+        <div class="card-badge badge-up" id="c-taxa-badge">estimativa</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Aporte Mensal</div>
+        <div class="card-value" id="c-aporte">—</div>
+        <div class="card-sub">valor aportado/mês</div>
+      </div>
+      <div class="card">
+        <div class="card-label">CDI Atual</div>
+        <div class="card-value" id="c-cdi">—</div>
+        <div class="card-sub">taxa referência ao ano</div>
+      </div>
+    </div>
+
+    <!-- GRÁFICOS PRINCIPAIS -->
+    <div class="charts-grid">
+      <div class="chart-panel">
+        <div class="chart-panel-header">
+          <div>
+            <div class="chart-panel-title">Crescimento Patrimonial</div>
+            <div class="chart-panel-sub">Evolução mês a mês do seu patrimônio</div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div>Patrimônio</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Aportes</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Rendimento</div>
+          </div>
+        </div>
+        <div style="position:relative; width:100%; height:280px;">
+          <canvas id="chart-crescimento" role="img" aria-label="Gráfico de crescimento patrimonial ao longo do período">Evolução do patrimônio.</canvas>
+        </div>
+      </div>
+
+      <div class="chart-panel">
+        <div class="chart-panel-header">
+          <div>
+            <div class="chart-panel-title">Composição</div>
+            <div class="chart-panel-sub">Principal vs. Rendimento</div>
+          </div>
+        </div>
+        <div class="ring-wrap">
+          <svg width="160" height="160" viewBox="0 0 160 160" id="donut-svg" role="img" aria-label="Gráfico de composição do patrimônio">
+            <circle cx="80" cy="80" r="64" fill="none" stroke="rgba(82,180,130,0.1)" stroke-width="20"/>
+            <circle cx="80" cy="80" r="64" fill="none" stroke="#34d399" stroke-width="20"
+              stroke-dasharray="402" stroke-dashoffset="402"
+              stroke-linecap="round" transform="rotate(-90 80 80)"
+              id="donut-principal" style="transition: stroke-dashoffset 1.2s ease"/>
+            <circle cx="80" cy="80" r="64" fill="none" stroke="#60a5fa" stroke-width="20"
+              stroke-dasharray="402" stroke-dashoffset="402"
+              stroke-linecap="round" transform="rotate(-90 80 80)"
+              id="donut-rendimento" style="transition: stroke-dashoffset 1.2s ease, stroke-dasharray 1.2s ease"/>
+            <text x="80" y="75" text-anchor="middle" fill="#e8f4f0" font-family="DM Mono" font-size="18" font-weight="500" id="donut-center-pct">0%</text>
+            <text x="80" y="94" text-anchor="middle" fill="#4d7a67" font-family="Sora" font-size="10">rendimento</text>
+          </svg>
+          <div style="display:flex; gap:1.5rem; margin-top:0.5rem;">
+            <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div><span id="legend-principal">Principal</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div><span id="legend-rendimento">Rendimento</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANCOS + TAXAS -->
+    <div class="bancos-grid">
+      <div class="bank-panel">
+        <div class="chart-panel-header" style="margin-bottom:1rem;">
+          <div>
+            <div class="chart-panel-title">Comparativo entre Bancos</div>
+            <div class="chart-panel-sub">Melhores taxas para seu tipo</div>
+          </div>
+          <div class="api-status" id="bancos-api-status" style="font-size:0.68rem;">
+            <div class="api-dot loading" id="bancos-dot"></div>
+            <span id="bancos-status-txt">Buscando...</span>
+          </div>
+        </div>
+        <div id="bancos-list">
+          <!-- preenchido por JS -->
+          <div class="bank-item"><div class="shimmer" style="height:40px; width:100%; border-radius:8px;"></div></div>
+          <div class="bank-item"><div class="shimmer" style="height:40px; width:100%; border-radius:8px; margin-top:0.5rem;"></div></div>
+          <div class="bank-item"><div class="shimmer" style="height:40px; width:100%; border-radius:8px; margin-top:0.5rem;"></div></div>
+        </div>
+      </div>
+
+      <div class="taxas-panel">
+        <div class="chart-panel-header" style="margin-bottom:1rem;">
+          <div>
+            <div class="chart-panel-title">Taxas de Referência</div>
+            <div class="chart-panel-sub">Brasil API · Atualizado agora</div>
+          </div>
+        </div>
+        <div id="taxas-list">
+          <div class="taxa-row">
+            <div><div class="taxa-name">SELIC</div><div class="taxa-desc">Taxa básica de juros</div></div>
+            <div class="taxa-valor shimmer" style="width:60px; height:20px;" id="taxa-selic-val">—</div>
+          </div>
+          <div class="taxa-row">
+            <div><div class="taxa-name">CDI</div><div class="taxa-desc">Certificado de Depósito Interbancário</div></div>
+            <div class="taxa-valor shimmer" style="width:60px; height:20px;" id="taxa-cdi-val">—</div>
+          </div>
+          <div class="taxa-row">
+            <div><div class="taxa-name">IPCA</div><div class="taxa-desc">Inflação acumulada 12m</div></div>
+            <div class="taxa-valor shimmer" style="width:60px; height:20px;" id="taxa-ipca-val">—</div>
+          </div>
+          <div class="taxa-row">
+            <div><div class="taxa-name">POUPANÇA</div><div class="taxa-desc">Rendimento anual estimado</div></div>
+            <div class="taxa-valor" id="taxa-poupanca-val">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRÁFICO COMPARATIVO BANCOS -->
+    <div class="chart-panel" style="margin-bottom:2rem;">
+      <div class="chart-panel-header">
+        <div>
+          <div class="chart-panel-title">Rentabilidade Comparativa · Simulação de R$ 10.000 em 12 meses</div>
+          <div class="chart-panel-sub">Estimativa baseada nas taxas atuais para cada produto</div>
+        </div>
+      </div>
+      <div style="position:relative; width:100%; height:200px;">
+        <canvas id="chart-bancos" role="img" aria-label="Gráfico comparativo de rentabilidade entre bancos">Comparativo de rentabilidade.</canvas>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID: Plotly placeholders + projeção -->
+    <div class="bottom-grid">
+
+      <div class="chart-panel">
+        <div class="chart-panel-header" style="margin-bottom:1rem;">
+          <div>
+            <div class="chart-panel-title">Projeção com Aportes</div>
+            <div class="chart-panel-sub">Juros compostos + aportes mensais</div>
+          </div>
+        </div>
+        <div style="position:relative; width:100%; height:180px;">
+          <canvas id="chart-aportes" role="img" aria-label="Projeção com aportes mensais">Projeção com aportes.</canvas>
+        </div>
+      </div>
+
+      <div class="chart-panel">
+        <div class="chart-panel-header" style="margin-bottom:1rem;">
+          <div>
+            <div class="chart-panel-title">Container Plotly</div>
+            <div class="chart-panel-sub">Pronto para integração Python</div>
+          </div>
+        </div>
+        <div class="plotly-placeholder" style="height:180px;">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect x="2" y="20" width="8" height="18" rx="2" fill="#34d399"/>
+            <rect x="16" y="10" width="8" height="28" rx="2" fill="#60a5fa"/>
+            <rect x="30" y="14" width="8" height="24" rx="2" fill="#a78bfa"/>
+          </svg>
+          <p>Container reservado para<br><code>plotly.express</code> via Flask</p>
+          <p style="font-size:0.68rem; margin-top:0.25rem;">Renderizar com <code>div id="plotly-chart-1"</code></p>
+        </div>
+      </div>
+
+      <div class="chart-panel">
+        <div class="chart-panel-header" style="margin-bottom:1rem;">
+          <div>
+            <div class="chart-panel-title">Container Matplotlib</div>
+            <div class="chart-panel-sub">Exportação base64 via API</div>
+          </div>
+        </div>
+        <div class="plotly-placeholder" style="height:180px;">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <polyline points="2,30 12,18 22,22 32,8 38,12" stroke="#fbbf24" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="2" cy="30" r="3" fill="#fbbf24"/>
+            <circle cx="12" cy="18" r="3" fill="#fbbf24"/>
+            <circle cx="22" cy="22" r="3" fill="#fbbf24"/>
+            <circle cx="32" cy="8" r="3" fill="#fbbf24"/>
+            <circle cx="38" cy="12" r="3" fill="#fbbf24"/>
+          </svg>
+          <p>Container reservado para<br><code>matplotlib.pyplot</code></p>
+          <p style="font-size:0.68rem; margin-top:0.25rem;">Injetar via <code>&lt;img src="{{ chart_b64 }}"&gt;</code></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FOOTER DASH -->
+    <div style="border-top:1px solid var(--border); padding:1.5rem 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+      <p style="font-size:0.75rem; color:var(--text3);">Helena Invest · Dados via <strong style="color:var(--text2)">BrasilAPI</strong> + <strong style="color:var(--text2)">Open Finance</strong> · Simulação apenas informativa</p>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;" id="footer-params"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================================================================
+// STATE
+// ================================================================
+let selectedTipo = 'CDB';
+let chartCrescimento = null;
+let chartBancos = null;
+let chartAportes = null;
+let taxasReferencia = { selic: null, cdi: null, ipca: null };
+
+// ================================================================
+// MASKS
+// ================================================================
+function maskMoney(el) {
+  let v = el.value.replace(/\D/g, '');
+  v = (parseInt(v || '0') / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  el.value = v;
+}
+
+function maskPct(el) {
+  let v = el.value.replace(/[^0-9,.]/g, '');
+  el.value = v;
+}
+
+function parseMoney(str) {
+  if (!str) return 0;
+  return parseFloat(str.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+}
+
+function parsePct(str) {
+  return parseFloat(str.replace(',', '.')) || 0;
+}
+
+function fmtBRL(v) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function fmtPct(v, decimals = 2) {
+  return v.toFixed(decimals) + '%';
+}
+
+// ================================================================
+// TIPO SELECTOR
+// ================================================================
+function selectTipo(btn) {
+  document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedTipo = btn.dataset.tipo;
+}
+
+// ================================================================
+// DATES
+// ================================================================
+function calcMeses(i, f) {
+  const d1 = new Date(i), d2 = new Date(f);
+  return Math.max(1, (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()));
+}
+
+// ================================================================
+// TAXAS RATES MAP
+// ================================================================
+const TAXAS_BASE = {
+  CDB:   { min: 0.95, max: 1.10, indexer: 'CDI', label: '% do CDI' },
+  LCI:   { min: 0.85, max: 0.95, indexer: 'CDI', label: '% do CDI (isento IR)' },
+  LCA:   { min: 0.87, max: 0.97, indexer: 'CDI', label: '% do CDI (isento IR)' },
+  SELIC: { min: 1.00, max: 1.00, indexer: 'SELIC', label: '100% da SELIC' },
+};
+
+// ================================================================
+// TOAST
+// ================================================================
+function showToast(msg, duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, duration);
+}
+
+// ================================================================
+// CALCULAR SIMULAÇÃO
+// ================================================================
+function calcularSimulacao(params) {
+  const { renda, percentual, aporte_adicional, meses, tipo, cdi, selic } = params;
+  const aporte_mensal = renda * (percentual / 100) + aporte_adicional;
+  const taxa_base = tipo === 'SELIC' ? selic : cdi;
+  const base = TAXAS_BASE[tipo] || TAXAS_BASE.CDB;
+  const fator = (base.min + base.max) / 2;
+  const taxa_aa = (taxa_base || 12.0) / 100 * fator;
+  const taxa_mm = Math.pow(1 + taxa_aa, 1 / 12) - 1;
+
+  // Projeção mês a mês
+  let patrimonio = 0;
+  let total_aportado = 0;
+  const historico = [];
+  const historico_aportes = [];
+  const historico_rendimento = [];
+
+  for (let m = 1; m <= meses; m++) {
+    patrimonio = patrimonio * (1 + taxa_mm) + aporte_mensal;
+    total_aportado += aporte_mensal;
+    historico.push(Math.round(patrimonio * 100) / 100);
+    historico_aportes.push(Math.round(total_aportado * 100) / 100);
+    historico_rendimento.push(Math.round((patrimonio - total_aportado) * 100) / 100);
+  }
+
+  const rendimento = patrimonio - total_aportado;
+  const pct_rendimento = total_aportado > 0 ? (rendimento / total_aportado) * 100 : 0;
+  const taxa_efetiva_aa = taxa_aa * 100;
+
+  return {
+    patrimonio_final: patrimonio,
+    total_aportado,
+    rendimento,
+    pct_rendimento,
+    taxa_efetiva_aa,
+    aporte_mensal,
+    historico,
+    historico_aportes,
+    historico_rendimento,
+    taxa_aa,
+    base,
+  };
+}
+
+// ================================================================
+// BUSCAR TAXAS (BrasilAPI)
+// ================================================================
+async function buscarTaxas() {
+  try {
+    const res = await fetch('https://brasilapi.com.br/api/taxas/v1');
+    if (!res.ok) throw new Error('API indisponível');
+    const arr = await res.json();
+    const mapa = {};
+    arr.forEach(t => { mapa[t.nome.toUpperCase()] = t.valor; });
+
+    taxasReferencia = {
+      selic: mapa['SELIC'] || 13.75,
+      cdi: mapa['CDI'] || 13.65,
+      ipca: mapa['IPCA'] || 4.52,
+    };
+
+    // Atualizar cards de taxas
+    setTaxaEl('taxa-selic-val', fmtPct(taxasReferencia.selic, 2) + ' a.a.');
+    setTaxaEl('taxa-cdi-val', fmtPct(taxasReferencia.cdi, 2) + ' a.a.');
+    setTaxaEl('taxa-ipca-val', fmtPct(taxasReferencia.ipca, 2) + ' a.a.');
+
+    const poupanca = taxasReferencia.selic > 8.5
+      ? (0.5 * taxasReferencia.selic).toFixed(2) + ' a.m. × 12'
+      : fmtPct(taxasReferencia.selic * 0.7, 2) + ' a.a.';
+    setTaxaEl('taxa-poupanca-val', poupanca);
+
+    setApiStatus('ok', 'BrasilAPI · OK');
+    return taxasReferencia;
+  } catch (e) {
+    setApiStatus('err', 'API offline · usando estimativas');
+    taxasReferencia = { selic: 13.75, cdi: 13.65, ipca: 4.52 };
+
+    setTaxaEl('taxa-selic-val', '13.75% a.a. (est.)');
+    setTaxaEl('taxa-cdi-val', '13.65% a.a. (est.)');
+    setTaxaEl('taxa-ipca-val', '4.52% a.a. (est.)');
+    setTaxaEl('taxa-poupanca-val', '7.18% a.a. (est.)');
+    showToast('BrasilAPI indisponível. Usando taxas estimadas.');
+    return taxasReferencia;
+  }
+}
+
+function setTaxaEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.remove('shimmer');
+    el.style.width = '';
+    el.style.height = '';
+    el.textContent = val;
+  }
+}
+
+function setApiStatus(tipo, txt) {
+  const dot = document.getElementById('api-dot');
+  const label = document.getElementById('api-status-txt');
+  dot.className = `api-dot ${tipo}`;
+  if (label) label.textContent = txt;
+}
+
+// ================================================================
+// MONTAR BANCOS
+// ================================================================
+const BANCOS_DATA = {
+  CDB: [
+    { nome: 'Nubank', sigla: 'NU', cor: '#7c3aed', bg: '#ede9fe', tipo: 'CDB 100% CDI', taxa_fator: 1.00 },
+    { nome: 'Inter', sigla: 'IT', cor: '#ea580c', bg: '#ffedd5', tipo: 'CDB 103% CDI', taxa_fator: 1.03 },
+    { nome: 'C6 Bank', sigla: 'C6', cor: '#0f172a', bg: '#e2e8f0', tipo: 'CDB 106% CDI', taxa_fator: 1.06 },
+    { nome: 'BTG+', sigla: 'BG', cor: '#b45309', bg: '#fef3c7', tipo: 'CDB 110% CDI', taxa_fator: 1.10 },
+    { nome: 'XP', sigla: 'XP', cor: '#1d4ed8', bg: '#dbeafe', tipo: 'CDB 108% CDI', taxa_fator: 1.08 },
+  ],
+  LCI: [
+    { nome: 'Itaú', sigla: 'IT', cor: '#1e40af', bg: '#dbeafe', tipo: 'LCI 90% CDI', taxa_fator: 0.90 },
+    { nome: 'Bradesco', sigla: 'BD', cor: '#dc2626', bg: '#fee2e2', tipo: 'LCI 87% CDI', taxa_fator: 0.87 },
+    { nome: 'BB', sigla: 'BB', cor: '#1d4ed8', bg: '#dbeafe', tipo: 'LCI 89% CDI', taxa_fator: 0.89 },
+    { nome: 'Santander', sigla: 'SN', cor: '#dc2626', bg: '#fee2e2', tipo: 'LCI 85% CDI', taxa_fator: 0.85 },
+    { nome: 'Sicoob', sigla: 'SC', cor: '#15803d', bg: '#dcfce7', tipo: 'LCI 92% CDI', taxa_fator: 0.92 },
+  ],
+  LCA: [
+    { nome: 'Agrobanco', sigla: 'AG', cor: '#15803d', bg: '#dcfce7', tipo: 'LCA 90% CDI', taxa_fator: 0.90 },
+    { nome: 'BB', sigla: 'BB', cor: '#1d4ed8', bg: '#dbeafe', tipo: 'LCA 91% CDI', taxa_fator: 0.91 },
+    { nome: 'Cresol', sigla: 'CR', cor: '#15803d', bg: '#dcfce7', tipo: 'LCA 88% CDI', taxa_fator: 0.88 },
+    { nome: 'Sicredi', sigla: 'SI', cor: '#166534', bg: '#dcfce7', tipo: 'LCA 93% CDI', taxa_fator: 0.93 },
+    { nome: 'BRB', sigla: 'BR', cor: '#1d4ed8', bg: '#dbeafe', tipo: 'LCA 89% CDI', taxa_fator: 0.89 },
+  ],
+  SELIC: [
+    { nome: 'Tesouro Direto', sigla: 'TD', cor: '#15803d', bg: '#dcfce7', tipo: 'Selic 100%', taxa_fator: 1.00 },
+    { nome: 'Nubank', sigla: 'NU', cor: '#7c3aed', bg: '#ede9fe', tipo: 'CDB 99% CDI', taxa_fator: 0.99 },
+    { nome: 'Inter', sigla: 'IT', cor: '#ea580c', bg: '#ffedd5', tipo: 'CDB 100% CDI', taxa_fator: 1.00 },
+    { nome: 'C6 Bank', sigla: 'C6', cor: '#0f172a', bg: '#e2e8f0', tipo: 'CDB 100% CDI', taxa_fator: 1.00 },
+    { nome: 'BTG+', sigla: 'BG', cor: '#b45309', bg: '#fef3c7', tipo: 'CDB 102% CDI', taxa_fator: 1.02 },
+  ],
+};
+
+function renderBancos(tipo, cdi) {
+  const lista = BANCOS_DATA[tipo] || BANCOS_DATA.CDB;
+  const sorted = [...lista].sort((a, b) => b.taxa_fator - a.taxa_fator);
+  const maxFator = sorted[0].taxa_fator;
+
+  const html = sorted.map(b => {
+    const taxa_real = (cdi * b.taxa_fator).toFixed(2);
+    const pct_barra = Math.round((b.taxa_fator / maxFator) * 100);
+    return `
+      <div class="bank-item">
+        <div class="bank-name">
+          <div class="bank-avatar" style="background:${b.bg}; color:${b.cor}">${b.sigla}</div>
+          <div>
+            <div class="bank-label">${b.nome}</div>
+            <div class="bank-type">${b.tipo}</div>
+          </div>
+        </div>
+        <div class="bank-rate">
+          <div class="bank-rate-value">${taxa_real}%</div>
+          <div class="bank-rate-label">a.a. estimado</div>
+          <div class="bank-bar-wrap"><div class="bank-bar" style="width:${pct_barra}%"></div></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('bancos-list').innerHTML = html;
+
+  const bdot = document.getElementById('bancos-dot');
+  const btxt = document.getElementById('bancos-status-txt');
+  if (bdot) { bdot.className = 'api-dot ok'; }
+  if (btxt) { btxt.textContent = 'Open Finance · Simulado'; }
+
+  return sorted;
+}
+
+// ================================================================
+// CHARTS
+// ================================================================
+function buildLabelsMonths(meses, inicio) {
+  const labels = [];
+  const d = new Date(inicio);
+  for (let i = 0; i < meses; i++) {
+    const m = new Date(d);
+    m.setMonth(m.getMonth() + i);
+    labels.push(m.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }));
+  }
+  return labels;
+}
+
+function downsample(arr, target = 24) {
+  if (arr.length <= target) return arr;
+  const result = [];
+  const step = arr.length / target;
+  for (let i = 0; i < target; i++) {
+    result.push(arr[Math.floor(i * step)]);
+  }
+  result.push(arr[arr.length - 1]);
+  return result;
+}
+
+function buildChartCrescimento(historico, historico_aportes, historico_rendimento, inicio) {
+  const meses = historico.length;
+  const labels = downsample(buildLabelsMonths(meses, inicio));
+  const pat = downsample(historico);
+  const ap = downsample(historico_aportes);
+  const rend = downsample(historico_rendimento);
+
+  if (chartCrescimento) chartCrescimento.destroy();
+  chartCrescimento = new Chart(document.getElementById('chart-crescimento'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Patrimônio',
+          data: pat,
+          borderColor: '#34d399',
+          backgroundColor: 'rgba(52,211,153,0.08)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 2,
+        },
+        {
+          label: 'Aportes',
+          data: ap,
+          borderColor: '#60a5fa',
+          backgroundColor: 'rgba(96,165,250,0.05)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+        },
+        {
+          label: 'Rendimento',
+          data: rend,
+          borderColor: '#a78bfa',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 1.5,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111c2e',
+          borderColor: 'rgba(82,180,130,0.3)',
+          borderWidth: 1,
+          titleColor: '#8bb5a4',
+          bodyColor: '#e8f4f0',
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${fmtBRL(ctx.parsed.y)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(82,180,130,0.06)' },
+          ticks: { color: '#4d7a67', font: { family: 'Sora', size: 10 } }
+        },
+        y: {
+          grid: { color: 'rgba(82,180,130,0.06)' },
+          ticks: {
+            color: '#4d7a67',
+            font: { family: 'DM Mono', size: 10 },
+            callback: v => 'R$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v.toFixed(0))
+          }
+        }
+      }
+    }
+  });
+}
+
+function buildChartBancos(tipo, cdi) {
+  const lista = BANCOS_DATA[tipo] || BANCOS_DATA.CDB;
+  const sorted = [...lista].sort((a, b) => a.taxa_fator - b.taxa_fator);
+  const labels = sorted.map(b => b.nome);
+  const valores = sorted.map(b => {
+    const taxa_mm = Math.pow(1 + (cdi * b.taxa_fator / 100), 1 / 12) - 1;
+    const resultado = 10000 * Math.pow(1 + taxa_mm, 12);
+    return Math.round((resultado - 10000) * 100) / 100;
+  });
+
+  const colors = sorted.map((_, i) => {
+    const t = i / (sorted.length - 1);
+    const r = Math.round(16 + t * (52 - 16));
+    const g = Math.round(100 + t * (211 - 100));
+    const b = Math.round(80 + t * (153 - 80));
+    return `rgb(${r},${g},${b})`;
+  });
+
+  if (chartBancos) chartBancos.destroy();
+  chartBancos = new Chart(document.getElementById('chart-bancos'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Rendimento em 12m (R$10k)',
+        data: valores,
+        backgroundColor: colors,
+        borderRadius: 6,
+        barPercentage: 0.6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111c2e',
+          borderColor: 'rgba(82,180,130,0.3)',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => ` Rendimento: ${fmtBRL(ctx.parsed.x)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(82,180,130,0.06)' },
+          ticks: {
+            color: '#4d7a67',
+            font: { family: 'DM Mono', size: 10 },
+            callback: v => fmtBRL(v)
+          }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#8bb5a4', font: { family: 'Sora', size: 11 } }
+        }
+      }
+    }
+  });
+}
+
+function buildChartAportes(historico, historico_aportes, inicio) {
+  const meses = historico.length;
+  const labels = downsample(buildLabelsMonths(meses, inicio), 12);
+  const pat = downsample(historico, 12);
+  const ap = downsample(historico_aportes, 12);
+
+  if (chartAportes) chartAportes.destroy();
+  chartAportes = new Chart(document.getElementById('chart-aportes'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Aportes',
+          data: ap,
+          backgroundColor: 'rgba(96,165,250,0.6)',
+          borderRadius: 3,
+          stack: 'stack',
+        },
+        {
+          label: 'Rendimento',
+          data: pat.map((v, i) => Math.max(0, v - ap[i])),
+          backgroundColor: 'rgba(52,211,153,0.7)',
+          borderRadius: 3,
+          stack: 'stack',
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#111c2e',
+          borderColor: 'rgba(82,180,130,0.3)',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${fmtBRL(ctx.parsed.y)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#4d7a67', font: { size: 9 } }
+        },
+        y: {
+          stacked: true,
+          grid: { color: 'rgba(82,180,130,0.06)' },
+          ticks: {
+            color: '#4d7a67',
+            font: { family: 'DM Mono', size: 9 },
+            callback: v => 'R$' + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v.toFixed(0))
+          }
+        }
+      }
+    }
+  });
+}
+
+// ================================================================
+// DONUT
+// ================================================================
+function animateDonut(principal, rendimento) {
+  const total = principal + rendimento;
+  const pct_rend = rendimento / total;
+  const pct_princ = principal / total;
+  const circ = 2 * Math.PI * 64; // ~402
+
+  const dp = document.getElementById('donut-principal');
+  const dr = document.getElementById('donut-rendimento');
+  const dc = document.getElementById('donut-center-pct');
+
+  // Principal arc
+  const dash_p = pct_princ * circ;
+  dp.setAttribute('stroke-dasharray', `${dash_p} ${circ}`);
+  dp.setAttribute('stroke-dashoffset', '0');
+
+  // Rendimento arc (offset by principal)
+  const dash_r = pct_rend * circ;
+  dr.setAttribute('stroke-dasharray', `${dash_r} ${circ}`);
+  dr.setAttribute('stroke-dashoffset', -dash_p);
+
+  dc.textContent = fmtPct(pct_rend * 100, 1);
+
+  document.getElementById('legend-principal').textContent = `Principal ${fmtPct(pct_princ * 100, 1)}`;
+  document.getElementById('legend-rendimento').textContent = `Rendimento ${fmtPct(pct_rend * 100, 1)}`;
+}
+
+// ================================================================
+// ANIMAR NÚMERO
+// ================================================================
+function animateNumber(el, start, end, duration, format) {
+  const startTime = performance.now();
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = start + (end - start) * ease;
+    el.textContent = format(current);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ================================================================
+// ATUALIZAR CARDS
+// ================================================================
+function preencherCards(sim, params) {
+  const { meses, tipo, inicio, fim } = params;
+
+  // Patrimônio
+  animateNumber(
+    document.getElementById('c-patrimonio'), 0, sim.patrimonio_final, 1200,
+    v => fmtBRL(v)
+  );
+  document.getElementById('c-patrimonio-badge').textContent = `+${fmtPct(sim.pct_rendimento)}`;
+  document.getElementById('c-patrimonio-badge').className = 'card-badge badge-up';
+
+  // Rendimento
+  animateNumber(
+    document.getElementById('c-rendimento'), 0, sim.rendimento, 1200,
+    v => fmtBRL(v)
+  );
+  document.getElementById('c-rendimento-pct').textContent = `${fmtPct(sim.pct_rendimento)} sobre o principal`;
+
+  // Total investido
+  animateNumber(
+    document.getElementById('c-investido'), 0, sim.total_aportado, 1200,
+    v => fmtBRL(v)
+  );
+  document.getElementById('c-meses').textContent = `${meses} meses de aportes`;
+  document.getElementById('c-periodo-badge').textContent = `${meses} meses`;
+
+  // Taxa
+  document.getElementById('c-taxa').textContent = fmtPct(sim.taxa_efetiva_aa);
+  document.getElementById('c-taxa-tipo').textContent = sim.base.label;
+  document.getElementById('c-taxa-badge').textContent = `estimativa ${tipo}`;
+
+  // Aporte mensal
+  document.getElementById('c-aporte').textContent = fmtBRL(sim.aporte_mensal);
+
+  // CDI
+  document.getElementById('c-cdi').textContent = fmtPct(taxasReferencia.cdi || 13.65);
+
+  // Dash title
+  document.getElementById('dash-titulo').textContent = `Simulação · ${tipo}`;
+  document.getElementById('dash-subtitulo').textContent =
+    `${new Date(inicio + 'T00:00:00').toLocaleDateString('pt-BR')} → ${new Date(fim + 'T00:00:00').toLocaleDateString('pt-BR')} · ${meses} meses · ${fmtBRL(sim.aporte_mensal)}/mês`;
+
+  // Footer params
+  document.getElementById('footer-params').innerHTML = `
+    <span style="font-size:0.72rem; color:var(--text3); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:0.25rem 0.6rem;">${tipo}</span>
+    <span style="font-size:0.72rem; color:var(--text3); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:0.25rem 0.6rem;">${meses} meses</span>
+    <span style="font-size:0.72rem; color:var(--text3); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:0.25rem 0.6rem;">${fmtBRL(sim.aporte_mensal)}/mês</span>
+    <span style="font-size:0.72rem; color:var(--text3); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:0.25rem 0.6rem;">CDI ${fmtPct(taxasReferencia.cdi || 13.65)}</span>
+  `;
+}
+
+// ================================================================
+// INICIAR SIMULAÇÃO
+// ================================================================
+async function iniciarSimulacao() {
+  const rendaStr = document.getElementById('inp-renda').value;
+  const pctStr = document.getElementById('inp-percentual').value;
+  const inicio = document.getElementById('inp-inicio').value;
+  const fim = document.getElementById('inp-fim').value;
+  const aporteStr = document.getElementById('inp-aporte').value;
+
+  const renda = parseMoney(rendaStr);
+  const percentual = parsePct(pctStr);
+  const aporte_adicional = parseMoney(aporteStr);
+
+  if (!renda || !percentual || !inicio || !fim) {
+    showToast('⚠️ Preencha todos os campos obrigatórios.');
+    return;
+  }
+
+  if (new Date(fim) <= new Date(inicio)) {
+    showToast('⚠️ A data de término deve ser posterior ao início.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-sim');
+  btn.textContent = 'Calculando...';
+  btn.classList.add('loading');
+
+  // Transição de tela
+  document.getElementById('screen-form').style.display = 'none';
+  document.getElementById('screen-dashboard').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const meses = calcMeses(inicio, fim);
+
+  // Buscar taxas reais
+  await buscarTaxas();
+
+  const params = {
+    renda,
+    percentual,
+    aporte_adicional,
+    meses,
+    tipo: selectedTipo,
+    inicio,
+    fim,
+    cdi: taxasReferencia.cdi || 13.65,
+    selic: taxasReferencia.selic || 13.75,
+  };
+
+  const sim = calcularSimulacao(params);
+
+  // Preencher tudo
+  preencherCards(sim, { meses, tipo: selectedTipo, inicio, fim });
+
+  // Gráficos com pequeno delay para animar após render
+  setTimeout(() => {
+    buildChartCrescimento(sim.historico, sim.historico_aportes, sim.historico_rendimento, inicio);
+    buildChartBancos(selectedTipo, taxasReferencia.cdi || 13.65);
+    buildChartAportes(sim.historico, sim.historico_aportes, inicio);
+    renderBancos(selectedTipo, taxasReferencia.cdi || 13.65);
+    animateDonut(sim.total_aportado, sim.rendimento);
+  }, 200);
+
+  btn.textContent = 'Simular Investimento →';
+  btn.classList.remove('loading');
+}
+
+// ================================================================
+// VOLTAR
+// ================================================================
+function voltarForm() {
+  document.getElementById('screen-dashboard').style.display = 'none';
+  document.getElementById('screen-form').style.display = 'flex';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // Setar datas padrão
+  const hoje = new Date();
+  const fimDefault = new Date(hoje);
+  fimDefault.setFullYear(fimDefault.getFullYear() + 2);
+
+  document.getElementById('inp-inicio').value = hoje.toISOString().split('T')[0];
+  document.getElementById('inp-fim').value = fimDefault.toISOString().split('T')[0];
+
+  // Setar valores padrão
+  document.getElementById('inp-renda').value = 'R$\u00a05.000,00';
+  document.getElementById('inp-percentual').value = '20';
+});
+</script>
+
+</body>
+</html>
